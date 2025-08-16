@@ -13,8 +13,12 @@ function error(message: string, status: number = 500) {
   return Response.json({ message, data: null }, { status })
 }
 
-r.get("/api", () => {
-  return ok()
+r.get("/*", () => {
+  return error("Not found", 404)
+})
+
+r.get("/api/v1/recipes", () => {
+  return ok([])
 })
 
 Bun.serve({

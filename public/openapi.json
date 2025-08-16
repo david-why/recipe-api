@@ -6,20 +6,24 @@
   },
   "servers": [
     {
-      "url": "/api"
+      "url": "/api/v1"
     }
   ],
   "paths": {
-    "/": {
+    "/recipes": {
       "get": {
-        "summary": "Get the root",
+        "summary": "Get recipes",
         "responses": {
           "200": {
             "description": "Successful response",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/root"
+                  "type": "array",
+                  "description": "The recipes",
+                  "items": {
+                    "$ref": "#/components/schemas/Recipe"
+                  }
                 }
               }
             }
@@ -30,14 +34,73 @@
   },
   "components": {
     "schemas": {
-      "root": {
-        "description": "A root thing",
+      "Recipe": {
         "type": "object",
+        "description": "A cooking recipe",
         "properties": {
-          "message": {
-            "type": "string"
+          "id": {
+            "type": "string",
+            "description": "The unique identifier of the recipe"
+          },
+          "steps": {
+            "type": "array",
+            "description": "The list of steps in this recipe",
+            "items": {
+              "description": "A step in a cooking recipe",
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "description": "The unique identifier of the recipe step"
+                },
+                "ingredients": {
+                  "type": "array",
+                  "description": "The list of identifiers of the ingredients used by this step",
+                  "items": {
+                    "type": "string",
+                    "description": "An identifier referencing an item in the ingredients array of Recipe objects"
+                  }
+                },
+                "text": {
+                  "type": "string",
+                  "description": "The user-readable instructions for this step"
+                }
+              }
+            }
+          },
+          "ingredients": {
+            "type": "array",
+            "description": "The list of ingredients used in this recipe",
+            "items": {
+              "$ref": "#/components/schemas/RecipeIngredient"
+            }
           }
         }
+      },
+      "RecipeIngredient": {
+        "type": "object",
+        "description": "An ingredient used in a recipe",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The unique identifier of the recipe ingredient"
+          },
+          "ingredientId": {
+            "type": "string",
+            "description": "An identifier referencing an Ingredient"
+          },
+          "amount": {
+            "type": "number",
+            "description": "The amount of the ingredient used in the recipe"
+          },
+          "unit": {
+            "$ref": "#/components/schemas/IngredientUnit"
+          }
+        }
+      },
+      "IngredientUnit": {
+        "type": "string",
+        "description": "The unit of the ingredient amount"
       }
     }
   }
