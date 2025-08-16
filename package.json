@@ -1,16 +1,20 @@
 {
   "name": "recipe-api",
   "module": "index.ts",
-  "type": "module",
-  "private": true,
-  "scripts": {
-    "dev": "bun --hot --no-clear-screen index.ts"
-  },
   "devDependencies": {
     "@types/bun": "latest",
+    "@types/swagger-ui-dist": "^3.30.6",
     "prettier": "^3.6.2"
   },
   "peerDependencies": {
     "typescript": "^5"
+  },
+  "private": true,
+  "scripts": {
+    "dev": "bun index.ts"
+  },
+  "type": "module",
+  "dependencies": {
+    "swagger-ui-dist": "^5.27.1"
   }
 }

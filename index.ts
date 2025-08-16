@@ -1,15 +1,28 @@
-import { Router } from "./src/router"
+import { Router } from "./src/backend/router"
+import docsPage from "./public/docs.html"
 
 const PORT = process.env.PORT || 3000
 
 const r = new Router()
 
-r.get("/", () => {
-  return Response.json({ message: "Hello, World!" })
+function ok(data: any = null, message: string | null = null) {
+  return Response.json({ data, message }, { status: 200 })
+}
+
+function error(message: string, status: number = 500) {
+  return Response.json({ message, data: null }, { status })
+}
+
+r.get("/api", () => {
+  return ok()
 })
 
 Bun.serve({
-  routes: r.routes,
+  routes: {
+    ...r.routes,
+    "/docs": docsPage,
+    "/openapi.json": Bun.file("public/openapi.json"),
+  },
   port: PORT,
 })
 
