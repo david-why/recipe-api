@@ -3,5 +3,5 @@
   "compilerOptions": {
     "lib": ["ESNext"],
   },
-  "include": ["src/backend/**/*", "src/shared/**/*"]
+  "include": ["index.ts", "src/backend/**/*", "src/shared/**/*"]
 }
