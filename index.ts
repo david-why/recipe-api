@@ -1,6 +1,7 @@
 import { type BunRequest, sql } from "bun"
 import z from "zod"
 import docsPage from "./public/docs.html"
+import openapi from "./public/openapi.json"
 import {
   createIngredient,
   createRecipe,
@@ -12,7 +13,11 @@ import {
   updateIngredient,
 } from "./src/backend/database"
 import { Router } from "./src/backend/router"
-import { CreateIngredientBody, CreateRecipeBody, CreateRecipeStepBody } from "./src/backend/schemas"
+import {
+  CreateIngredientBody,
+  CreateRecipeBody,
+  CreateRecipeStepBody,
+} from "./src/backend/schemas"
 
 const PORT = process.env.PORT || 3000
 
@@ -117,7 +122,9 @@ Bun.serve({
   routes: {
     ...r.routes,
     "/docs": docsPage,
-    "/openapi.json": Bun.file("public/openapi.json"),
+    "/openapi.json": {
+      GET: async () => Response.json(openapi),
+    },
   },
   port: PORT,
 })
