@@ -49,6 +49,36 @@
           }
         }
       }
+    },
+    "/recipes/{id}": {
+      "get": {
+        "summary": "Get recipe by ID",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "description": "The ID of the recipe to get"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The retrieved recipe",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "The retrieved recipe",
+                  "$ref": "#/components/schemas/Recipe"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {

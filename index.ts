@@ -1,7 +1,11 @@
-import { BunRequest, sql } from "bun"
+import { type BunRequest, sql } from "bun"
 import z from "zod"
 import docsPage from "./public/docs.html"
-import { createRecipe, getAllRecipes } from "./src/backend/database"
+import {
+  createRecipe,
+  getAllRecipes,
+  getRecipeById,
+} from "./src/backend/database"
 import { Router } from "./src/backend/router"
 import { CreateRecipeBody } from "./src/backend/schemas"
 
@@ -34,6 +38,8 @@ r.get("/*", () => {
   return error("Not found", 404)
 })
 
+// #region API routes
+
 r.get("/api/v1/recipes", async (req) => {
   const { limit, page } = getPagination(req)
   const recipes = await getAllRecipes(limit, page)
@@ -49,6 +55,14 @@ r.post("/api/v1/recipes", async (req) => {
   await createRecipe(data.data)
   return ok(null, 201)
 })
+
+r.get("/api/v1/recipes/:id", async (req) => {
+  const id = req.params.id
+  const result = await getRecipeById(id)
+  return ok(result)
+})
+
+// #endregion API routes
 
 Bun.serve({
   routes: {
