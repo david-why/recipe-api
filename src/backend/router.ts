@@ -1,3 +1,5 @@
+import type { BunRequest } from "bun"
+
 export class Router {
   routes: Record<string, Bun.RouterTypes.RouteHandlerObject<string>> = {}
 
@@ -8,6 +10,20 @@ export class Router {
   ) {
     ;(this.routes[path] ??= {})[method] = (req, server) => {
       return handler(req, server)
+    }
+  }
+
+  private getHandler(handler: Bun.RouterTypes.RouteHandler<string>) {
+    return (req: BunRequest, server: Bun.Server) => {
+      try {
+        return handler(req, server)
+      } catch (error) {
+        console.error("Error in route handler:", error)
+        return Response.json(
+          { error: "Internal server error" },
+          { status: 500 },
+        )
+      }
     }
   }
 

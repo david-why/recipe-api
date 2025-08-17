@@ -42,6 +42,14 @@
             "type": "string",
             "description": "The unique identifier of the recipe"
           },
+          "title": {
+            "type": "string",
+            "description": "The name of the recipe"
+          },
+          "description": {
+            "type": "string",
+            "description": "The description of the recipe"
+          },
           "steps": {
             "type": "array",
             "description": "The list of steps in this recipe",
@@ -61,9 +69,13 @@
                     "description": "An identifier referencing an item in the ingredients array of Recipe objects"
                   }
                 },
-                "text": {
+                "instruction": {
                   "type": "string",
                   "description": "The user-readable instructions for this step"
+                },
+                "ordinal": {
+                  "type": "number",
+                  "description": "The order of this step within the recipe"
                 }
               }
             }
@@ -85,11 +97,10 @@
             "type": "string",
             "description": "The unique identifier of the recipe ingredient"
           },
-          "ingredientId": {
-            "type": "string",
-            "description": "An identifier referencing an Ingredient"
+          "ingredient": {
+            "$ref": "#/components/schemas/Ingredient"
           },
-          "amount": {
+          "quantity": {
             "type": "number",
             "description": "The amount of the ingredient used in the recipe"
           },
@@ -101,6 +112,24 @@
       "IngredientUnit": {
         "type": "string",
         "description": "The unit of the ingredient amount"
+      },
+      "Ingredient": {
+        "type": "object",
+        "description": "An ingredient used in recipes",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The unique identifier for the ingredient"
+          },
+          "name": {
+            "type": "string",
+            "description": "The user-readable name of the ingredient"
+          },
+          "defaultUnit": {
+            "type": "string",
+            "description": "The default unit for the ingredient"
+          }
+        }
       }
     }
   }
