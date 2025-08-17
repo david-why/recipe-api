@@ -12,7 +12,8 @@ const command = args.shift()!
 const commands = {
   adduser: async () => {
     const hash = await password.hash(args[1])
-    await sql`INSERT INTO users (username, password_hash, flags) VALUES (${args[0]}, ${hash}, 1)`
+    const flags = Number(args[2] || 0)
+    await sql`INSERT INTO users (username, password_hash, flags) VALUES (${args[0]}, ${hash}, ${flags})`
   },
 }
 
