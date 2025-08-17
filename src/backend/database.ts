@@ -245,6 +245,10 @@ export async function createRecipeStep(
   }
 }
 
+export async function deleteRecipe(id: string) {
+  await sql`DELETE FROM recipes WHERE id = ${id}`
+}
+
 export async function getAllIngredients(
   limit: number,
   page: number,

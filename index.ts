@@ -5,6 +5,7 @@ import {
   createIngredient,
   createRecipe,
   createRecipeStep,
+  deleteRecipe,
   getAllIngredients,
   getAllRecipes,
   getRecipeById,
@@ -75,6 +76,12 @@ r.post("/api/v1/recipes/:id/steps", async (req) => {
   }
   await createRecipeStep(id, data.data)
   return ok(null, 201)
+})
+
+r.delete("/api/v1/recipes/:id", async (req) => {
+  const id = req.params.id
+  await deleteRecipe(id)
+  return ok()
 })
 
 r.get("/api/v1/ingredients", async (req) => {

@@ -78,6 +78,26 @@
             }
           }
         }
+      },
+      "delete": {
+        "summary": "Delete recipe",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "description": "The ID of the recipe to delete"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successfully deleted recipe"
+          }
+        }
       }
     },
     "/recipes/{id}/steps": {
