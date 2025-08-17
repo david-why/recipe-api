@@ -40,7 +40,8 @@ declare global {
             unit: null
             ingredient: null
           },
-        ]
+        ],
+    user: Pick<DBUser, "id" | "username" | "flags">
   }
 
   declare interface DBIngredient {
@@ -72,6 +73,7 @@ declare global {
       unit: string
       ingredient: Ingredient
     }[]
+    user: Pick<User, "id" | "username" | "flags">
   }
 
   declare interface Ingredient {

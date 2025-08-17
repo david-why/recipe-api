@@ -32,6 +32,11 @@
       },
       "post": {
         "summary": "Create recipe",
+        "security": [
+          {
+            "jwt": []
+          }
+        ],
         "requestBody": {
           "description": "The recipe to create",
           "required": true,
@@ -46,6 +51,16 @@
         "responses": {
           "201": {
             "description": "Recipe successfully created"
+          },
+          "401": {
+            "description": "User is not logged in",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            }
           }
         }
       }
@@ -81,6 +96,11 @@
       },
       "delete": {
         "summary": "Delete recipe",
+        "security": [
+          {
+            "jwt": []
+          }
+        ],
         "parameters": [
           {
             "in": "path",
@@ -96,6 +116,26 @@
         "responses": {
           "204": {
             "description": "Successfully deleted recipe"
+          },
+          "401": {
+            "description": "User is not logged in",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "User is not permitted to delete this recipe",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            }
           }
         }
       }
@@ -103,6 +143,11 @@
     "/recipes/{id}/steps": {
       "post": {
         "summary": "Create a recipe step",
+        "security": [
+          {
+            "jwt": []
+          }
+        ],
         "parameters": [
           {
             "in": "path",
@@ -129,6 +174,26 @@
         "responses": {
           "201": {
             "description": "Recipe step created successfully"
+          },
+          "401": {
+            "description": "User is not logged in",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "User is not permitted to modify this recipe",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            }
           }
         }
       }
@@ -155,6 +220,11 @@
       },
       "post": {
         "summary": "Create ingredient",
+        "security": [
+          {
+            "jwt": []
+          }
+        ],
         "requestBody": {
           "description": "The ingredient to create",
           "required": true,
@@ -165,12 +235,42 @@
               }
             }
           }
+        },
+        "responses": {
+          "201": {
+            "description": "Ingredient created successfully"
+          },
+          "401": {
+            "description": "User is not logged in",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "User is not permitted to create ingredients",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            }
+          }
         }
       }
     },
     "/ingredients/{id}": {
       "put": {
         "summary": "Update ingredient",
+        "security": [
+          {
+            "jwt": []
+          }
+        ],
         "parameters": [
           {
             "in": "path",
@@ -197,6 +297,26 @@
         "responses": {
           "204": {
             "description": "Successfully updated ingredient"
+          },
+          "401": {
+            "description": "User is not logged in",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "User is not permitted to modify ingredients",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            }
           }
         }
       }
@@ -240,14 +360,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "error": {
-                      "examples": [
-                        "Invalid credentials"
-                      ]
-                    }
-                  }
+                  "$ref": "#/components/schemas/APIError"
                 }
               }
             }
@@ -285,6 +398,13 @@
   },
   "components": {
     "schemas": {
+      "APIError": {
+        "description": "An error response",
+        "type": "object",
+        "properties": {
+          "error": true
+        }
+      },
       "Recipe": {
         "description": "A cooking recipe",
         "allOf": [
@@ -401,6 +521,29 @@
           }
         ]
       },
+      "User": {
+        "type": "object",
+        "description": "A user",
+        "allOf": [
+          {
+            "properties": {
+              "passwordHash": {
+                "type": "string",
+                "description": "The hashed password for the user"
+              }
+            },
+            "required": [
+              "passwordHash"
+            ]
+          }
+        ],
+        "required": [
+          "id",
+          "username",
+          "passwordHash",
+          "flags"
+        ]
+      },
       "CreateRecipeBody": {
         "type": "object",
         "description": "A recipe sent by the client to create",
@@ -510,33 +653,22 @@
           }
         ]
       },
-      "User": {
+      "LoginBody": {
         "type": "object",
-        "description": "A user",
+        "description": "The username and password to login",
         "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid",
-            "description": "The unique identifier of the user"
-          },
           "username": {
             "type": "string",
-            "description": "A unique username for the user"
+            "description": "The username of the user"
           },
-          "passwordHash": {
+          "password": {
             "type": "string",
-            "description": "The hashed password for the user"
-          },
-          "flags": {
-            "type": "integer",
-            "description": "The flags of the user (1=admin)"
+            "description": "The password of the user"
           }
         },
         "required": [
-          "id",
           "username",
-          "passwordHash",
-          "flags"
+          "password"
         ]
       },
       "BaseRecipe": {
@@ -606,23 +738,23 @@
           "defaultUnit"
         ]
       },
-      "LoginBody": {
+      "BaseUser": {
         "type": "object",
-        "description": "The username and password to login",
         "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "The unique identifier of the user"
+          },
           "username": {
             "type": "string",
-            "description": "The username of the user"
+            "description": "A unique username for the user"
           },
-          "password": {
-            "type": "string",
-            "description": "The password of the user"
+          "flags": {
+            "type": "integer",
+            "description": "The flags of the user (1=admin)"
           }
-        },
-        "required": [
-          "username",
-          "password"
-        ]
+        }
       }
     },
     "securitySchemes": {

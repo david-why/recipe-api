@@ -74,10 +74,6 @@ function getAuth(req: BunRequest, required: boolean = false) {
   return null
 }
 
-r.get("/*", () => {
-  return error("Not found", 404)
-})
-
 // #region API routes
 
 r.get("/api/v1/recipes", async (req) => {
@@ -87,12 +83,14 @@ r.get("/api/v1/recipes", async (req) => {
 })
 
 r.post("/api/v1/recipes", async (req) => {
+  const auth = getAuth(req, true)
+  const userId = auth.sub
   const body = await req.json()
   const data = CreateRecipeBody.safeParse(body)
   if (!data.success) {
     return error(z.treeifyError(data.error), 400)
   }
-  await createRecipe(data.data)
+  await createRecipe(userId, data.data)
   return ok(null, 201)
 })
 
@@ -104,6 +102,12 @@ r.get("/api/v1/recipes/:id", async (req) => {
 
 r.post("/api/v1/recipes/:id/steps", async (req) => {
   const id = req.params.id
+  const auth = getAuth(req, true)
+  const userId = auth.sub
+  const recipe = await getRecipeById(id)
+  if (!recipe || (recipe.user.id !== userId && !(auth.flags & 1))) {
+    return error("You are not allowed to create a step", 403)
+  }
   const body = await req.json()
   const data = CreateRecipeStepBody.safeParse(body)
   if (!data.success) {
@@ -115,6 +119,12 @@ r.post("/api/v1/recipes/:id/steps", async (req) => {
 
 r.delete("/api/v1/recipes/:id", async (req) => {
   const id = req.params.id
+  const auth = getAuth(req, true)
+  const userId = auth.sub
+  const recipe = await getRecipeById(id)
+  if (!recipe || (recipe.user.id !== userId && !(auth.flags & 1))) {
+    return error("You are not allowed to delete this recipe", 403)
+  }
   await deleteRecipe(id)
   return ok()
 })
@@ -126,6 +136,10 @@ r.get("/api/v1/ingredients", async (req) => {
 })
 
 r.post("/api/v1/ingredients", async (req) => {
+  const auth = getAuth(req, true)
+  if (!(auth.flags & 1)) {
+    return error("You are not allowed to create ingredients", 403)
+  }
   const body = await req.json()
   const data = CreateIngredientBody.safeParse(body)
   if (!data.success) {
@@ -136,6 +150,10 @@ r.post("/api/v1/ingredients", async (req) => {
 })
 
 r.put("/api/v1/ingredients/:id", async (req) => {
+  const auth = getAuth(req, true)
+  if (!(auth.flags & 1)) {
+    return error("You are not allowed to create ingredients", 403)
+  }
   const id = req.params.id
   const body = await req.json()
   const data = CreateIngredientBody.safeParse(body)

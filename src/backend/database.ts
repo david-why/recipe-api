@@ -1,6 +1,19 @@
 import { sql } from "bun"
 import { HTTPError } from "./router"
 
+function uniqueReducer<T>(key: keyof T) {
+  return (prev: T[], current: T) => {
+    const id = current[key]
+    for (const item of prev) {
+      if (item[key] === id) {
+        return prev
+      }
+    }
+    prev.push(current)
+    return prev
+  }
+}
+
 function mapDbRecipe(recipe: DBRecipe): Recipe {
   return {
     id: recipe.id,
@@ -13,7 +26,8 @@ function mapDbRecipe(recipe: DBRecipe): Recipe {
         ordinal: rs.ordinal,
         instruction: rs.instruction,
         ingredients: rs.ingredients || [],
-      })),
+      }))
+      .reduce(uniqueReducer("id"), []),
     ingredients: recipe.ingredients
       .filter((ri) => ri.id !== null)
       .map((ri) => ({
@@ -21,7 +35,13 @@ function mapDbRecipe(recipe: DBRecipe): Recipe {
         quantity: ri.quantity,
         unit: ri.unit,
         ingredient: mapDbIngredient(ri.ingredient),
-      })),
+      }))
+      .reduce(uniqueReducer("id"), []),
+    user: {
+      id: recipe.user.id,
+      username: recipe.user.username,
+      flags: recipe.user.flags,
+    },
   }
 }
 
@@ -85,15 +105,22 @@ export async function getAllRecipes(
               i.id = ri.ingredient_id
           )
         )
-      ) AS ingredients
+      ) AS ingredients,
+      json_build_object(
+        'id', u.id,
+        'username', u.username,
+        'flags', u.flags
+      ) AS user
     FROM
       recipes AS r
+    INNER JOIN
+      users AS u ON r.user_id = u.id
     LEFT JOIN
       recipe_steps AS rs ON r.id = rs.recipe_id
     LEFT JOIN
       recipe_ingredients AS ri ON r.id = ri.recipe_id
     GROUP BY
-      r.id
+      r.id, u.id
     ORDER BY
       r.id
     LIMIT ${limit}
@@ -102,66 +129,75 @@ export async function getAllRecipes(
   return recipes.map(mapDbRecipe)
 }
 
-export async function createRecipe(data: CreateRecipeBody) {
-  await sql.transaction(async (tx) => {
-    const recipeId = (
-      await tx<[{ id: string }]>`
-        INSERT INTO recipes (title, description)
-        VALUES (${data.title}, ${data.description})
-        RETURNING id
-      `
-    )[0].id
+export async function createRecipe(userId: string, data: CreateRecipeBody) {
+  const recipeId = (
+    await sql<[{ id: string }]>`
+      INSERT INTO recipes (title, description, user_id)
+      VALUES (${data.title}, ${data.description}, ${userId})
+      RETURNING id
+    `
+  )[0].id
 
-    const dbIngredients = data.ingredients.map((i) => ({
-      recipe_id: recipeId,
-      quantity: i.quantity,
-      unit: i.unit,
-      ingredient_id: i.ingredientId,
-    }))
-    const dbIngredientIds = data.ingredients.length
+  const dbIngredients = data.ingredients.map((i) => ({
+    recipe_id: recipeId,
+    quantity: i.quantity,
+    unit: i.unit,
+    ingredient_id: i.ingredientId,
+  }))
+  let dbIngredientIds: string[]
+  try {
+    dbIngredientIds = data.ingredients.length
       ? (
-          await tx<{ id: string }[]>`
-            INSERT INTO recipe_ingredients ${tx(dbIngredients)}
+          await sql<{ id: string }[]>`
+            INSERT INTO recipe_ingredients ${sql(dbIngredients)}
             RETURNING id
           `
         ).map((i) => i.id)
       : []
-    const ingredientIdMap = Object.fromEntries(
-      data.ingredients.map((ingredient, index) => [
-        ingredient.id,
-        dbIngredientIds[index],
-      ]),
-    )
-
-    if (data.steps.length) {
-      const dbSteps = data.steps.map((s) => ({
-        recipe_id: recipeId,
-        ordinal: s.ordinal,
-        instruction: s.instruction,
-      }))
-      const dbStepIds = (
-        await tx<{ id: string }[]>`
-          INSERT INTO recipe_steps ${tx(dbSteps)}
-          RETURNING id
-        `
-      ).map((s) => s.id)
-
-      for (const [index, step] of data.steps.entries()) {
-        if (step.ingredients.length === 0) continue
-        const stepId = dbStepIds[index]
-        const dbStepIngredients = step.ingredients.map((i) => {
-          if (!ingredientIdMap[i]) {
-            throw new HTTPError(400, `Invalid ingredient ID: ${i}`)
-          }
-          return {
-            recipe_step_id: stepId,
-            recipe_ingredient_id: ingredientIdMap[i],
-          }
-        })
-        await tx`INSERT INTO recipe_step_ingredients ${tx(dbStepIngredients)}`
-      }
+  } catch (error) {
+    if (
+      error instanceof Error &&
+      error.message.includes("violates foreign key constraint")
+    ) {
+      throw new HTTPError(400, "Invalid ingredient ID")
     }
-  })
+    throw error
+  }
+  const ingredientIdMap = Object.fromEntries(
+    data.ingredients.map((ingredient, index) => [
+      ingredient.id,
+      dbIngredientIds[index],
+    ]),
+  )
+
+  if (data.steps.length) {
+    const dbSteps = data.steps.map((s) => ({
+      recipe_id: recipeId,
+      ordinal: s.ordinal,
+      instruction: s.instruction,
+    }))
+    const dbStepIds = (
+      await sql<{ id: string }[]>`
+        INSERT INTO recipe_steps ${sql(dbSteps)}
+        RETURNING id
+      `
+    ).map((s) => s.id)
+
+    for (const [index, step] of data.steps.entries()) {
+      if (step.ingredients.length === 0) continue
+      const stepId = dbStepIds[index]
+      const dbStepIngredients = step.ingredients.map((i) => {
+        if (!ingredientIdMap[i]) {
+          throw new HTTPError(400, `Invalid ingredient ID: ${i}`)
+        }
+        return {
+          recipe_step_id: stepId,
+          recipe_ingredient_id: ingredientIdMap[i],
+        }
+      })
+      await sql`INSERT INTO recipe_step_ingredients ${sql(dbStepIngredients)}`
+    }
+  }
 }
 
 export async function getRecipeById(id: string): Promise<Recipe | null> {
@@ -204,9 +240,16 @@ export async function getRecipeById(id: string): Promise<Recipe | null> {
               i.id = ri.ingredient_id
           )
         )
-      ) AS ingredients
+      ) AS ingredients,
+      json_build_object(
+        'id', u.id,
+        'username', u.username,
+        'flags', u.flags
+      ) AS user
     FROM
       recipes AS r
+    INNER JOIN
+      users AS u ON r.user_id = u.id
     LEFT JOIN
       recipe_steps AS rs ON r.id = rs.recipe_id
     LEFT JOIN
@@ -214,7 +257,7 @@ export async function getRecipeById(id: string): Promise<Recipe | null> {
     WHERE
       r.id = ${id}
     GROUP BY
-      r.id
+      r.id, u.id
   `
   const recipe = recipes[0]
   return recipe ? mapDbRecipe(recipe) : null
