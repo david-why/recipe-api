@@ -200,6 +200,87 @@
           }
         }
       }
+    },
+    "/auth/login": {
+      "post": {
+        "summary": "Log in",
+        "requestBody": {
+          "description": "The login info of the user",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginBody"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "User logged in successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "token": {
+                      "type": "string",
+                      "description": "The Bearer JWT token"
+                    }
+                  },
+                  "required": [
+                    "token"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Username or password incorrect",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "examples": [
+                        "Invalid credentials"
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/inspect": {
+      "get": {
+        "summary": "Inspect the logged-in user",
+        "security": [
+          {
+            "jwt": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Token validated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "user": {
+                      "$ref": "#/components/schemas/User"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -429,6 +510,35 @@
           }
         ]
       },
+      "User": {
+        "type": "object",
+        "description": "A user",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "The unique identifier of the user"
+          },
+          "username": {
+            "type": "string",
+            "description": "A unique username for the user"
+          },
+          "passwordHash": {
+            "type": "string",
+            "description": "The hashed password for the user"
+          },
+          "flags": {
+            "type": "integer",
+            "description": "The flags of the user (1=admin)"
+          }
+        },
+        "required": [
+          "id",
+          "username",
+          "passwordHash",
+          "flags"
+        ]
+      },
       "BaseRecipe": {
         "type": "object",
         "properties": {
@@ -495,6 +605,32 @@
           "name",
           "defaultUnit"
         ]
+      },
+      "LoginBody": {
+        "type": "object",
+        "description": "The username and password to login",
+        "properties": {
+          "username": {
+            "type": "string",
+            "description": "The username of the user"
+          },
+          "password": {
+            "type": "string",
+            "description": "The password of the user"
+          }
+        },
+        "required": [
+          "username",
+          "password"
+        ]
+      }
+    },
+    "securitySchemes": {
+      "jwt": {
+        "description": "JWT Bearer token",
+        "type": "http",
+        "scheme": "Bearer",
+        "bearerFormat": "JWT"
       }
     }
   }
