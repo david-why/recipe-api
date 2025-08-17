@@ -85,3 +85,55 @@ export async function getAllRecipes(
       })),
   }))
 }
+
+export async function createRecipe(data: CreateRecipeBody) {
+  await sql.transaction(async (tx) => {
+    const recipeId = (
+      await tx<[{ id: string }]>`
+        INSERT INTO recipes (title, description)
+        VALUES (${data.title}, ${data.description})
+        RETURNING id
+      `
+    )[0].id
+
+    const dbIngredients = data.ingredients.map((i) => ({
+      recipe_id: recipeId,
+      quantity: i.quantity,
+      unit: i.unit,
+      ingredient_id: i.ingredientId,
+    }))
+    const dbIngredientIds = (
+      await tx<{ id: string }[]>`
+      INSERT INTO recipe_ingredients ${tx(dbIngredients)}
+      RETURNING id
+    `
+    ).map((i) => i.id)
+    const ingredientIdMap = Object.fromEntries(
+      data.ingredients.map((ingredient, index) => [
+        ingredient.id,
+        dbIngredientIds[index],
+      ]),
+    )
+
+    const dbSteps = data.steps.map((s) => ({
+      recipe_id: recipeId,
+      ordinal: s.ordinal,
+      instruction: s.instruction,
+    }))
+    const dbStepIds = (
+      await tx<{ id: string }[]>`
+        INSERT INTO recipe_steps ${tx(dbSteps)}
+        RETURNING id
+      `
+    ).map((s) => s.id)
+
+    for (const [index, step] of data.steps.entries()) {
+      const stepId = dbStepIds[index]
+      const dbStepIngredients = step.ingredients.map((i) => ({
+        recipe_step_id: stepId,
+        recipe_ingredient_id: ingredientIdMap[i],
+      }))
+      await tx`INSERT INTO recipe_step_ingredients ${tx(dbStepIngredients)}`
+    }
+  })
+}

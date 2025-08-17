@@ -1,9 +1,9 @@
 import { BunRequest, sql } from "bun"
+import z from "zod"
 import docsPage from "./public/docs.html"
-import { getAllRecipes } from "./src/backend/database"
+import { createRecipe, getAllRecipes } from "./src/backend/database"
 import { Router } from "./src/backend/router"
 import { CreateRecipeBody } from "./src/backend/schemas"
-import z from "zod"
 
 const PORT = process.env.PORT || 3000
 
@@ -46,6 +46,7 @@ r.post("/api/v1/recipes", async (req) => {
   if (!data.success) {
     return error(z.treeifyError(data.error), 400)
   }
+  await createRecipe(data.data)
   return ok(null, 201)
 })
 

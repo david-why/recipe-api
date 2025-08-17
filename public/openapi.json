@@ -80,7 +80,12 @@
                   "$ref": "#/components/schemas/RecipeIngredient"
                 }
               }
-            }
+            },
+            "required": [
+              "id",
+              "steps",
+              "ingredients"
+            ]
           }
         ]
       },
@@ -100,7 +105,11 @@
               "ingredient": {
                 "$ref": "#/components/schemas/Ingredient"
               }
-            }
+            },
+            "required": [
+              "id",
+              "ingredient"
+            ]
           }
         ]
       },
@@ -125,7 +134,12 @@
             "type": "string",
             "description": "The default unit for the ingredient"
           }
-        }
+        },
+        "required": [
+          "id",
+          "name",
+          "defaultUnit"
+        ]
       },
       "RecipeStep": {
         "description": "A step in a cooking recipe",
@@ -140,8 +154,21 @@
                 "type": "string",
                 "format": "uuid",
                 "description": "The unique identifier of the recipe step"
+              },
+              "ingredients": {
+                "type": "array",
+                "description": "The list of identifiers of the ingredients used by this step",
+                "items": {
+                  "type": "string",
+                  "format": "uuid",
+                  "description": "An identifier referencing an item in the ingredients array of Recipe objects"
+                }
               }
-            }
+            },
+            "required": [
+              "id",
+              "ingredients"
+            ]
           }
         ]
       },
@@ -159,7 +186,26 @@
                 "description": "The list of steps in this recipe",
                 "items": {
                   "description": "A step in a cooking recipe",
-                  "$ref": "#/components/schemas/BaseRecipeStep"
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/BaseRecipeStep"
+                    },
+                    {
+                      "properties": {
+                        "ingredients": {
+                          "type": "array",
+                          "description": "The list of identifiers of the ingredients used by this step",
+                          "items": {
+                            "type": "string",
+                            "description": "An identifier referencing an item in the ingredients array of Recipe objects"
+                          }
+                        }
+                      },
+                      "required": [
+                        "ingredients"
+                      ]
+                    }
+                  ]
                 }
               },
               "ingredients": {
@@ -175,15 +221,18 @@
                       "properties": {
                         "id": {
                           "type": "string",
-                          "format": "uuid",
-                          "description": "The unique identifier of the recipe ingredient"
+                          "description": "The identifier of the recipe ingredient (unique in this request)"
                         },
                         "ingredientId": {
                           "type": "string",
                           "format": "uuid",
                           "description": "An identifier referencing an Ingredient"
                         }
-                      }
+                      },
+                      "required": [
+                        "id",
+                        "ingredientId"
+                      ]
                     }
                   ]
                 }
@@ -209,7 +258,11 @@
             "type": "string",
             "description": "The description of the recipe"
           }
-        }
+        },
+        "required": [
+          "title",
+          "description"
+        ]
       },
       "BaseRecipeIngredient": {
         "type": "object",
@@ -221,20 +274,15 @@
           "unit": {
             "$ref": "#/components/schemas/IngredientUnit"
           }
-        }
+        },
+        "required": [
+          "quantity",
+          "unit"
+        ]
       },
       "BaseRecipeStep": {
         "type": "object",
         "properties": {
-          "ingredients": {
-            "type": "array",
-            "description": "The list of identifiers of the ingredients used by this step",
-            "items": {
-              "type": "string",
-              "format": "uuid",
-              "description": "An identifier referencing an item in the ingredients array of Recipe objects"
-            }
-          },
           "instruction": {
             "type": "string",
             "description": "The user-readable instructions for this step"
@@ -243,7 +291,11 @@
             "type": "number",
             "description": "The order of this step within the recipe"
           }
-        }
+        },
+        "required": [
+          "instruction",
+          "ordinal"
+        ]
       }
     }
   }

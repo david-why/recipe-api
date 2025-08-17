@@ -8,15 +8,13 @@ export class Router {
     path: T,
     handler: Bun.RouterTypes.RouteHandler<T>,
   ) {
-    ;(this.routes[path] ??= {})[method] = (req, server) => {
-      return handler(req, server)
-    }
+    ;(this.routes[path] ??= {})[method] = this.getHandler(handler)
   }
 
   private getHandler(handler: Bun.RouterTypes.RouteHandler<string>) {
-    return (req: BunRequest, server: Bun.Server) => {
+    return async (req: BunRequest, server: Bun.Server) => {
       try {
-        return handler(req, server)
+        return await handler(req, server)
       } catch (error) {
         console.error("Error in route handler:", error)
         return Response.json(

@@ -7,12 +7,12 @@ export const CreateRecipeBody = z.object({
     z.object({
       ordinal: z.number().min(0),
       instruction: z.string().max(1000),
-      ingredients: z.array(z.uuid()),
+      ingredients: z.array(z.string()),
     }),
   ),
   ingredients: z.array(
     z.object({
-      id: z.uuid(),
+      id: z.string(),
       ingredientId: z.uuid(),
       quantity: z.number().min(0),
       unit: z.string().min(1).max(100),
