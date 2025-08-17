@@ -1,4 +1,4 @@
-import { type BunRequest, sql } from "bun"
+import { type BunRequest, password, sql } from "bun"
 import z from "zod"
 import docsPage from "./public/docs.html"
 import openapi from "./public/openapi.json"
@@ -10,14 +10,18 @@ import {
   getAllIngredients,
   getAllRecipes,
   getRecipeById,
+  getUserById,
+  getUserByUsername,
   updateIngredient,
 } from "./src/backend/database"
-import { Router } from "./src/backend/router"
+import { HTTPError, Router } from "./src/backend/router"
 import {
   CreateIngredientBody,
   CreateRecipeBody,
   CreateRecipeStepBody,
+  LoginBody,
 } from "./src/backend/schemas"
+import { signJWT, verifyJWT } from "./src/backend/jwt"
 
 const PORT = process.env.PORT || 3000
 
@@ -42,6 +46,32 @@ function getPagination(req: BunRequest) {
   )
   const page = Math.max(Number(url.searchParams.get("page") || 0), 0)
   return { limit, page }
+}
+
+function getAuth(
+  req: BunRequest,
+  required?: false,
+): { sub: string; flags: number } | null
+function getAuth(
+  req: BunRequest,
+  required: true,
+): { sub: string; flags: number }
+
+function getAuth(req: BunRequest, required: boolean = false) {
+  const authorization = req.headers.get("authorization")
+  if (authorization && authorization.startsWith("Bearer ")) {
+    const token = authorization.slice(7)
+    try {
+      const payload = verifyJWT<{ sub: string; flags: number }>(token)
+      return payload
+    } catch (error) {
+      console.error("Error verifying JWT:", error)
+    }
+  }
+  if (required) {
+    throw new HTTPError(401, "Unauthorized")
+  }
+  return null
 }
 
 r.get("/*", () => {
@@ -114,6 +144,30 @@ r.put("/api/v1/ingredients/:id", async (req) => {
   }
   await updateIngredient(id, data.data)
   return ok()
+})
+
+r.post("/api/v1/auth/login", async (req) => {
+  const body = await req.json()
+  const data = LoginBody.safeParse(body)
+  if (!data.success) {
+    return error(z.treeifyError(data.error), 400)
+  }
+  const user = await getUserByUsername(data.data.username)
+  if (
+    !user ||
+    !(await password.verify(data.data.password, user.passwordHash))
+  ) {
+    return error("Invalid credentials", 401)
+  }
+  const token = signJWT({ sub: user.id, flags: user.flags })
+  return ok({ token })
+})
+
+r.get("/api/v1/auth/inspect", async (req) => {
+  const auth = getAuth(req, true)
+  const userId = auth.sub
+  const user = await getUserById(userId)
+  return ok({ user })
 })
 
 // #endregion API routes

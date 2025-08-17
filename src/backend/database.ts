@@ -33,6 +33,15 @@ function mapDbIngredient(ingredient: DBIngredient): Ingredient {
   }
 }
 
+function mapDbUser(user: DBUser): User {
+  return {
+    id: user.id,
+    username: user.username,
+    passwordHash: user.password_hash,
+    flags: user.flags,
+  }
+}
+
 export async function getAllRecipes(
   limit: number,
   page: number,
@@ -289,4 +298,34 @@ export async function updateIngredient(id: string, data: CreateIngredientBody) {
     SET ${sql(dbIngredient)}
     WHERE id = ${id}
   `
+}
+
+export async function getUserByUsername(username: string) {
+  const users = await sql<DBUser[]>`
+    SELECT
+      u.id,
+      u.username,
+      u.password_hash,
+      u.flags
+    FROM
+      users AS u
+    WHERE
+      u.username = ${username}
+  `
+  return users[0] ? mapDbUser(users[0]) : null
+}
+
+export async function getUserById(id: string) {
+  const users = await sql<DBUser[]>`
+    SELECT
+      u.id,
+      u.username,
+      u.password_hash,
+      u.flags
+    FROM
+      users AS u
+    WHERE
+      u.id = ${id}
+  `
+  return users[0] ? mapDbUser(users[0]) : null
 }

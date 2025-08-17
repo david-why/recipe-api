@@ -3,6 +3,7 @@ import type {
   CreateIngredientBody,
   CreateRecipeBody,
   CreateRecipeStepBody,
+  LoginBody,
 } from "../backend/schemas"
 
 declare global {
@@ -47,6 +48,13 @@ declare global {
     name: string
     default_unit: string
   }
+  
+  declare interface DBUser {
+    id: string
+    username: string
+    password_hash: string
+    flags: number
+  }
 
   declare interface Recipe {
     id: string
@@ -72,9 +80,18 @@ declare global {
     defaultUnit: string
   }
 
+  declare interface User {
+    id: string
+    username: string
+    passwordHash: string
+    flags: number
+  }
+
   declare type CreateRecipeBody = z.infer<typeof CreateRecipeBody>
 
   declare type CreateRecipeStepBody = z.infer<typeof CreateRecipeStepBody>
 
   declare type CreateIngredientBody = z.infer<typeof CreateIngredientBody>
+
+  declare type LoginBody = z.infer<typeof LoginBody>
 }

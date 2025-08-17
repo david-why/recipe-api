@@ -31,3 +31,10 @@ CREATE TABLE IF NOT EXISTS recipe_step_ingredients (
     recipe_step_id UUID REFERENCES recipe_steps(id) ON DELETE CASCADE,
     recipe_ingredient_id UUID REFERENCES recipe_ingredients(id) ON DELETE CASCADE
 );
+
+CREATE TABLE IF NOT EXISTS users (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    username TEXT NOT NULL UNIQUE,
+    password_hash TEXT NOT NULL,
+    flags INT NOT NULL DEFAULT 0
+);

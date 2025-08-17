@@ -24,3 +24,8 @@ export const CreateIngredientBody = z.object({
   name: z.string().min(1).max(100),
   defaultUnit: z.string().max(100),
 })
+
+export const LoginBody = z.object({
+  username: z.string(),
+  password: z.string(),
+})
