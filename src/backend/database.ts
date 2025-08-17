@@ -16,7 +16,7 @@ export async function getAllRecipes(
           'instruction', rs.instruction,
           'ingredients', (
             SELECT
-              json_agg(rsi.ingredient_id)
+              json_agg(rsi.recipe_ingredient_id)
             FROM
               recipe_step_ingredients AS rsi
             WHERE

@@ -15,7 +15,7 @@
         "summary": "Get recipes",
         "responses": {
           "200": {
-            "description": "Successful response",
+            "description": "List of recipes on the server",
             "content": {
               "application/json": {
                 "schema": {
@@ -29,85 +29,80 @@
             }
           }
         }
+      },
+      "post": {
+        "summary": "Create recipe",
+        "requestBody": {
+          "description": "The recipe to create",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateRecipeBody"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Recipe successfully created"
+          }
+        }
       }
     }
   },
   "components": {
     "schemas": {
       "Recipe": {
-        "type": "object",
         "description": "A cooking recipe",
-        "properties": {
-          "id": {
-            "type": "string",
-            "description": "The unique identifier of the recipe"
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/BaseRecipe"
           },
-          "title": {
-            "type": "string",
-            "description": "The name of the recipe"
-          },
-          "description": {
-            "type": "string",
-            "description": "The description of the recipe"
-          },
-          "steps": {
-            "type": "array",
-            "description": "The list of steps in this recipe",
-            "items": {
-              "description": "A step in a cooking recipe",
-              "type": "object",
-              "properties": {
-                "id": {
-                  "type": "string",
-                  "description": "The unique identifier of the recipe step"
-                },
-                "ingredients": {
-                  "type": "array",
-                  "description": "The list of identifiers of the ingredients used by this step",
-                  "items": {
-                    "type": "string",
-                    "description": "An identifier referencing an item in the ingredients array of Recipe objects"
-                  }
-                },
-                "instruction": {
-                  "type": "string",
-                  "description": "The user-readable instructions for this step"
-                },
-                "ordinal": {
-                  "type": "number",
-                  "description": "The order of this step within the recipe"
+          {
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid",
+                "description": "The unique identifier of the recipe"
+              },
+              "steps": {
+                "type": "array",
+                "description": "The list of steps in this recipe",
+                "items": {
+                  "$ref": "#/components/schemas/RecipeStep"
+                }
+              },
+              "ingredients": {
+                "type": "array",
+                "description": "The list of ingredients used in this recipe",
+                "items": {
+                  "$ref": "#/components/schemas/RecipeIngredient"
                 }
               }
             }
-          },
-          "ingredients": {
-            "type": "array",
-            "description": "The list of ingredients used in this recipe",
-            "items": {
-              "$ref": "#/components/schemas/RecipeIngredient"
-            }
           }
-        }
+        ]
       },
       "RecipeIngredient": {
-        "type": "object",
         "description": "An ingredient used in a recipe",
-        "properties": {
-          "id": {
-            "type": "string",
-            "description": "The unique identifier of the recipe ingredient"
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/BaseRecipeIngredient"
           },
-          "ingredient": {
-            "$ref": "#/components/schemas/Ingredient"
-          },
-          "quantity": {
-            "type": "number",
-            "description": "The amount of the ingredient used in the recipe"
-          },
-          "unit": {
-            "$ref": "#/components/schemas/IngredientUnit"
+          {
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid",
+                "description": "The unique identifier of the recipe ingredient"
+              },
+              "ingredient": {
+                "$ref": "#/components/schemas/Ingredient"
+              }
+            }
           }
-        }
+        ]
       },
       "IngredientUnit": {
         "type": "string",
@@ -119,6 +114,7 @@
         "properties": {
           "id": {
             "type": "string",
+            "format": "uuid",
             "description": "The unique identifier for the ingredient"
           },
           "name": {
@@ -128,6 +124,124 @@
           "defaultUnit": {
             "type": "string",
             "description": "The default unit for the ingredient"
+          }
+        }
+      },
+      "RecipeStep": {
+        "description": "A step in a cooking recipe",
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/BaseRecipeStep"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid",
+                "description": "The unique identifier of the recipe step"
+              }
+            }
+          }
+        ]
+      },
+      "CreateRecipeBody": {
+        "type": "object",
+        "description": "A recipe sent by the client to create",
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/BaseRecipe"
+          },
+          {
+            "properties": {
+              "steps": {
+                "type": "array",
+                "description": "The list of steps in this recipe",
+                "items": {
+                  "description": "A step in a cooking recipe",
+                  "$ref": "#/components/schemas/BaseRecipeStep"
+                }
+              },
+              "ingredients": {
+                "type": "array",
+                "description": "The list of ingredients used in this recipe",
+                "items": {
+                  "description": "An ingredient used in this recipe",
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/BaseRecipeIngredient"
+                    },
+                    {
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "format": "uuid",
+                          "description": "The unique identifier of the recipe ingredient"
+                        },
+                        "ingredientId": {
+                          "type": "string",
+                          "format": "uuid",
+                          "description": "An identifier referencing an Ingredient"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            },
+            "required": [
+              "title",
+              "description",
+              "steps",
+              "ingredients"
+            ]
+          }
+        ]
+      },
+      "BaseRecipe": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "description": "The name of the recipe"
+          },
+          "description": {
+            "type": "string",
+            "description": "The description of the recipe"
+          }
+        }
+      },
+      "BaseRecipeIngredient": {
+        "type": "object",
+        "properties": {
+          "quantity": {
+            "type": "number",
+            "description": "The amount of the ingredient used in the recipe"
+          },
+          "unit": {
+            "$ref": "#/components/schemas/IngredientUnit"
+          }
+        }
+      },
+      "BaseRecipeStep": {
+        "type": "object",
+        "properties": {
+          "ingredients": {
+            "type": "array",
+            "description": "The list of identifiers of the ingredients used by this step",
+            "items": {
+              "type": "string",
+              "format": "uuid",
+              "description": "An identifier referencing an item in the ingredients array of Recipe objects"
+            }
+          },
+          "instruction": {
+            "type": "string",
+            "description": "The user-readable instructions for this step"
+          },
+          "ordinal": {
+            "type": "number",
+            "description": "The order of this step within the recipe"
           }
         }
       }

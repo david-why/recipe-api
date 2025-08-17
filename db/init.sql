@@ -28,5 +28,5 @@ CREATE TABLE IF NOT EXISTS recipe_ingredients (
 CREATE TABLE IF NOT EXISTS recipe_step_ingredients (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     recipe_step_id UUID REFERENCES recipe_steps(id) ON DELETE CASCADE,
-    ingredient_id UUID REFERENCES recipe_ingredients(id) ON DELETE CASCADE
+    recipe_ingredient_id UUID REFERENCES recipe_ingredients(id) ON DELETE CASCADE
 );
