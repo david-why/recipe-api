@@ -35,6 +35,10 @@ export class Router {
   post<T extends string>(path: T, handler: Bun.RouterTypes.RouteHandler<T>) {
     this.addRoute("POST", path, handler)
   }
+
+  put<T extends string>(path: T, handler: Bun.RouterTypes.RouteHandler<T>) {
+    this.addRoute("PUT", path, handler)
+  }
 }
 
 export class HTTPError extends Error {

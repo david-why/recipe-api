@@ -20,12 +20,16 @@ function mapDbRecipe(recipe: DBRecipe): Recipe {
         id: ri.id,
         quantity: ri.quantity,
         unit: ri.unit,
-        ingredient: {
-          id: ri.ingredient.id,
-          name: ri.ingredient.name,
-          defaultUnit: ri.ingredient.default_unit,
-        },
+        ingredient: mapDbIngredient(ri.ingredient),
       })),
+  }
+}
+
+function mapDbIngredient(ingredient: DBIngredient): Ingredient {
+  return {
+    id: ingredient.id,
+    name: ingredient.name,
+    defaultUnit: ingredient.default_unit,
   }
 }
 
@@ -83,10 +87,8 @@ export async function getAllRecipes(
       r.id
     ORDER BY
       r.id
-    LIMIT
-      ${limit}
-    OFFSET
-      ${page * limit}
+    LIMIT ${limit}
+    OFFSET ${page * limit}
   `
   return recipes.map(mapDbRecipe)
 }
@@ -241,4 +243,46 @@ export async function createRecipeStep(
     }))
     await sql`INSERT INTO recipe_step_ingredients ${sql(dbStepIngredients)}`
   }
+}
+
+export async function getAllIngredients(
+  limit: number,
+  page: number,
+): Promise<Ingredient[]> {
+  const ingredients = await sql<DBIngredient[]>`
+    SELECT
+      i.id,
+      i.name,
+      i.default_unit
+    FROM
+      ingredients AS i
+    ORDER BY
+      i.name
+    LIMIT ${limit}
+    OFFSET ${page * limit}
+  `
+  return ingredients.map(mapDbIngredient)
+}
+
+export async function createIngredient(data: CreateIngredientBody) {
+  const dbIngredient = {
+    name: data.name,
+    default_unit: data.defaultUnit,
+  }
+  await sql<[{ id: string }]>`
+    INSERT INTO ingredients ${sql(dbIngredient)}
+    RETURNING id
+  `
+}
+
+export async function updateIngredient(id: string, data: CreateIngredientBody) {
+  const dbIngredient = {
+    name: data.name,
+    default_unit: data.defaultUnit,
+  }
+  await sql`
+    UPDATE ingredients
+    SET ${sql(dbIngredient)}
+    WHERE id = ${id}
+  `
 }

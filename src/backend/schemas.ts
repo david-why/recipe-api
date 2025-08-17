@@ -15,7 +15,12 @@ export const CreateRecipeBody = z.object({
       id: z.string(),
       ingredientId: z.uuid(),
       quantity: z.number().min(0),
-      unit: z.string().min(1).max(100),
+      unit: z.string().max(100),
     }),
   ),
+})
+
+export const CreateIngredientBody = z.object({
+  name: z.string().min(1).max(100),
+  defaultUnit: z.string().max(100),
 })

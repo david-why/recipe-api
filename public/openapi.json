@@ -101,27 +101,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "allOf": [
-                  {
-                    "$ref": "#/components/schemas/BaseRecipeStep"
-                  },
-                  {
-                    "properties": {
-                      "ingredients": {
-                        "type": "array",
-                        "description": "The list of identifiers of the ingredients used by this step",
-                        "items": {
-                          "type": "string",
-                          "format": "uuid",
-                          "description": "An identifier referencing an item in the ingredients array of Recipe objects"
-                        }
-                      }
-                    },
-                    "required": [
-                      "ingredients"
-                    ]
-                  }
-                ]
+                "$ref": "#/components/schemas/CreateRecipeStepBody"
               }
             }
           }
@@ -129,6 +109,74 @@
         "responses": {
           "201": {
             "description": "Recipe step created successfully"
+          }
+        }
+      }
+    },
+    "/ingredients": {
+      "get": {
+        "summary": "Get ingredients",
+        "responses": {
+          "200": {
+            "description": "The list of ingredients on the server",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "List of ingredients",
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Ingredient"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Create ingredient",
+        "requestBody": {
+          "description": "The ingredient to create",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateIngredientBody"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/ingredients/{id}": {
+      "put": {
+        "summary": "Update ingredient",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "description": "The ID of the ingredient to update"
+          }
+        ],
+        "requestBody": {
+          "description": "The new ingredient data",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateIngredientBody"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "Successfully updated ingredient"
           }
         }
       }
@@ -203,25 +251,22 @@
       "Ingredient": {
         "type": "object",
         "description": "An ingredient used in recipes",
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid",
-            "description": "The unique identifier for the ingredient"
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/BaseIngredient"
           },
-          "name": {
-            "type": "string",
-            "description": "The user-readable name of the ingredient"
-          },
-          "defaultUnit": {
-            "type": "string",
-            "description": "The default unit for the ingredient"
+          {
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid",
+                "description": "The unique identifier for the ingredient"
+              }
+            },
+            "required": [
+              "id"
+            ]
           }
-        },
-        "required": [
-          "id",
-          "name",
-          "defaultUnit"
         ]
       },
       "RecipeStep": {
@@ -330,6 +375,40 @@
           }
         ]
       },
+      "CreateRecipeStepBody": {
+        "type": "object",
+        "description": "A recipe step sent by the client to create",
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/BaseRecipeStep"
+          },
+          {
+            "properties": {
+              "ingredients": {
+                "type": "array",
+                "description": "The list of identifiers of the ingredients used by this step",
+                "items": {
+                  "type": "string",
+                  "format": "uuid",
+                  "description": "An identifier referencing an item in the ingredients array of Recipe objects"
+                }
+              }
+            },
+            "required": [
+              "ingredients"
+            ]
+          }
+        ]
+      },
+      "CreateIngredientBody": {
+        "type": "object",
+        "description": "An ingredient sent by the client to create it",
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/BaseIngredient"
+          }
+        ]
+      },
       "BaseRecipe": {
         "type": "object",
         "properties": {
@@ -378,6 +457,23 @@
         "required": [
           "instruction",
           "ordinal"
+        ]
+      },
+      "BaseIngredient": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "The user-readable name of the ingredient"
+          },
+          "defaultUnit": {
+            "type": "string",
+            "description": "The default unit for the ingredient"
+          }
+        },
+        "required": [
+          "name",
+          "defaultUnit"
         ]
       }
     }

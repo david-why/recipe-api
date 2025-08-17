@@ -2,13 +2,16 @@ import { type BunRequest, sql } from "bun"
 import z from "zod"
 import docsPage from "./public/docs.html"
 import {
+  createIngredient,
   createRecipe,
   createRecipeStep,
+  getAllIngredients,
   getAllRecipes,
   getRecipeById,
+  updateIngredient,
 } from "./src/backend/database"
 import { Router } from "./src/backend/router"
-import { CreateRecipeBody, CreateRecipeStepBody } from "./src/backend/schemas"
+import { CreateIngredientBody, CreateRecipeBody, CreateRecipeStepBody } from "./src/backend/schemas"
 
 const PORT = process.env.PORT || 3000
 
@@ -72,6 +75,33 @@ r.post("/api/v1/recipes/:id/steps", async (req) => {
   }
   await createRecipeStep(id, data.data)
   return ok(null, 201)
+})
+
+r.get("/api/v1/ingredients", async (req) => {
+  const { limit, page } = getPagination(req)
+  const ingredients = await getAllIngredients(limit, page)
+  return ok(ingredients)
+})
+
+r.post("/api/v1/ingredients", async (req) => {
+  const body = await req.json()
+  const data = CreateIngredientBody.safeParse(body)
+  if (!data.success) {
+    return error(z.treeifyError(data.error), 400)
+  }
+  await createIngredient(data.data)
+  return ok(null, 201)
+})
+
+r.put("/api/v1/ingredients/:id", async (req) => {
+  const id = req.params.id
+  const body = await req.json()
+  const data = CreateIngredientBody.safeParse(body)
+  if (!data.success) {
+    return error(z.treeifyError(data.error), 400)
+  }
+  await updateIngredient(id, data.data)
+  return ok()
 })
 
 // #endregion API routes
