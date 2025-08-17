@@ -16,6 +16,9 @@ export class Router {
       try {
         return await handler(req, server)
       } catch (error) {
+        if (error instanceof HTTPError) {
+          return Response.json({ error: error.data }, { status: error.status })
+        }
         console.error("Error in route handler:", error)
         return Response.json(
           { error: "Internal server error" },
@@ -31,5 +34,15 @@ export class Router {
 
   post<T extends string>(path: T, handler: Bun.RouterTypes.RouteHandler<T>) {
     this.addRoute("POST", path, handler)
+  }
+}
+
+export class HTTPError extends Error {
+  constructor(
+    public status: number,
+    public data: any,
+  ) {
+    super(JSON.stringify(data))
+    this.name = "HTTPError"
   }
 }

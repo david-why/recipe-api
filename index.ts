@@ -3,11 +3,12 @@ import z from "zod"
 import docsPage from "./public/docs.html"
 import {
   createRecipe,
+  createRecipeStep,
   getAllRecipes,
   getRecipeById,
 } from "./src/backend/database"
 import { Router } from "./src/backend/router"
-import { CreateRecipeBody } from "./src/backend/schemas"
+import { CreateRecipeBody, CreateRecipeStepBody } from "./src/backend/schemas"
 
 const PORT = process.env.PORT || 3000
 
@@ -60,6 +61,17 @@ r.get("/api/v1/recipes/:id", async (req) => {
   const id = req.params.id
   const result = await getRecipeById(id)
   return ok(result)
+})
+
+r.post("/api/v1/recipes/:id/steps", async (req) => {
+  const id = req.params.id
+  const body = await req.json()
+  const data = CreateRecipeStepBody.safeParse(body)
+  if (!data.success) {
+    return error(z.treeifyError(data.error), 400)
+  }
+  await createRecipeStep(id, data.data)
+  return ok(null, 201)
 })
 
 // #endregion API routes

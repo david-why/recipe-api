@@ -1,5 +1,5 @@
 import type z from "zod"
-import type { CreateRecipeBody } from "../backend/schemas"
+import type { CreateRecipeBody, CreateRecipeStepBody } from "../backend/schemas"
 
 declare global {
   declare interface DBRecipe {
@@ -69,4 +69,6 @@ declare global {
   }
 
   declare type CreateRecipeBody = z.infer<typeof CreateRecipeBody>
+
+  declare type CreateRecipeStepBody = z.infer<typeof CreateRecipeStepBody>
 }

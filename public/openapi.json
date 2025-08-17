@@ -79,6 +79,59 @@
           }
         }
       }
+    },
+    "/recipes/{id}/steps": {
+      "post": {
+        "summary": "Create a recipe step",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "description": "The ID of the recipe to create a new step for"
+          }
+        ],
+        "requestBody": {
+          "description": "The step to create",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/BaseRecipeStep"
+                  },
+                  {
+                    "properties": {
+                      "ingredients": {
+                        "type": "array",
+                        "description": "The list of identifiers of the ingredients used by this step",
+                        "items": {
+                          "type": "string",
+                          "format": "uuid",
+                          "description": "An identifier referencing an item in the ingredients array of Recipe objects"
+                        }
+                      }
+                    },
+                    "required": [
+                      "ingredients"
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Recipe step created successfully"
+          }
+        }
+      }
     }
   },
   "components": {

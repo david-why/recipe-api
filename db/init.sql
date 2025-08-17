@@ -14,7 +14,8 @@ CREATE TABLE IF NOT EXISTS recipe_steps (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     recipe_id UUID REFERENCES recipes(id) ON DELETE CASCADE,
     ordinal FLOAT NOT NULL,
-    instruction TEXT NOT NULL
+    instruction TEXT NOT NULL,
+    UNIQUE (recipe_id, ordinal)
 );
 
 CREATE TABLE IF NOT EXISTS recipe_ingredients (
