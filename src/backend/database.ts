@@ -130,74 +130,76 @@ export async function getAllRecipes(
 }
 
 export async function createRecipe(userId: string, data: CreateRecipeBody) {
-  const recipeId = (
-    await sql<[{ id: string }]>`
-      INSERT INTO recipes (title, description, user_id)
-      VALUES (${data.title}, ${data.description}, ${userId})
-      RETURNING id
-    `
-  )[0].id
-
-  const dbIngredients = data.ingredients.map((i) => ({
-    recipe_id: recipeId,
-    quantity: i.quantity,
-    unit: i.unit,
-    ingredient_id: i.ingredientId,
-  }))
-  let dbIngredientIds: string[]
-  try {
-    dbIngredientIds = data.ingredients.length
-      ? (
-          await sql<{ id: string }[]>`
-            INSERT INTO recipe_ingredients ${sql(dbIngredients)}
-            RETURNING id
-          `
-        ).map((i) => i.id)
-      : []
-  } catch (error) {
-    if (
-      error instanceof Error &&
-      error.message.includes("violates foreign key constraint")
-    ) {
-      throw new HTTPError(400, "Invalid ingredient ID")
-    }
-    throw error
-  }
-  const ingredientIdMap = Object.fromEntries(
-    data.ingredients.map((ingredient, index) => [
-      ingredient.id,
-      dbIngredientIds[index],
-    ]),
-  )
-
-  if (data.steps.length) {
-    const dbSteps = data.steps.map((s) => ({
-      recipe_id: recipeId,
-      ordinal: s.ordinal,
-      instruction: s.instruction,
-    }))
-    const dbStepIds = (
-      await sql<{ id: string }[]>`
-        INSERT INTO recipe_steps ${sql(dbSteps)}
+  await sql.begin(async (tx) => {
+    const recipeId = (
+      await tx<[{ id: string }]>`
+        INSERT INTO recipes (title, description, user_id)
+        VALUES (${data.title}, ${data.description}, ${userId})
         RETURNING id
       `
-    ).map((s) => s.id)
+    )[0].id
 
-    for (const [index, step] of data.steps.entries()) {
-      if (step.ingredients.length === 0) continue
-      const stepId = dbStepIds[index]
-      const dbStepIngredients = step.ingredients.map((i) => {
-        if (!ingredientIdMap[i]) {
-          throw new HTTPError(400, `Invalid ingredient ID: ${i}`)
-        }
-        return {
-          recipe_step_id: stepId,
-          recipe_ingredient_id: ingredientIdMap[i],
-        }
-      })
-      await sql`INSERT INTO recipe_step_ingredients ${sql(dbStepIngredients)}`
+    const dbIngredients = data.ingredients.map((i) => ({
+      recipe_id: recipeId,
+      quantity: i.quantity,
+      unit: i.unit,
+      ingredient_id: i.ingredientId,
+    }))
+    let dbIngredientIds: string[]
+    try {
+      dbIngredientIds = data.ingredients.length
+        ? (
+            await tx<{ id: string }[]>`
+              INSERT INTO recipe_ingredients ${tx(dbIngredients)}
+              RETURNING id
+            `
+          ).map((i) => i.id)
+        : []
+    } catch (error) {
+      if (
+        error instanceof Error &&
+        error.message.includes("violates foreign key constraint")
+      ) {
+        throw new HTTPError(400, "Invalid ingredient ID")
+      }
+      throw error
     }
-  }
+    const ingredientIdMap = Object.fromEntries(
+      data.ingredients.map((ingredient, index) => [
+        ingredient.id,
+        dbIngredientIds[index],
+      ]),
+    )
+
+    if (data.steps.length) {
+      const dbSteps = data.steps.map((s) => ({
+        recipe_id: recipeId,
+        ordinal: s.ordinal,
+        instruction: s.instruction,
+      }))
+      const dbStepIds = (
+        await tx<{ id: string }[]>`
+          INSERT INTO recipe_steps ${tx(dbSteps)}
+          RETURNING id
+        `
+      ).map((s) => s.id)
+
+      for (const [index, step] of data.steps.entries()) {
+        if (step.ingredients.length === 0) continue
+        const stepId = dbStepIds[index]
+        const dbStepIngredients = step.ingredients.map((i) => {
+          if (!ingredientIdMap[i]) {
+            throw new HTTPError(400, `Invalid ingredient ID: ${i}`)
+          }
+          return {
+            recipe_step_id: stepId,
+            recipe_ingredient_id: ingredientIdMap[i],
+          }
+        })
+        await tx`INSERT INTO recipe_step_ingredients ${tx(dbStepIngredients)}`
+      }
+    }
+  })
 }
 
 export async function getRecipeById(id: string): Promise<Recipe | null> {
@@ -267,34 +269,35 @@ export async function createRecipeStep(
   recipeId: string,
   data: CreateRecipeStepBody,
 ) {
-  // apparently sql.begin is bugged so no transactions :(
-  const dbStep = {
-    recipe_id: recipeId,
-    ordinal: data.ordinal,
-    instruction: data.instruction,
-  }
-  let stepId: string
-  try {
-    stepId = (
-      await sql<[{ id: string }]>`
-        INSERT INTO recipe_steps ${sql(dbStep)}
-        RETURNING id
-      `
-    )[0].id
-  } catch (error) {
-    if (error instanceof Error && error.message.includes("duplicate key")) {
-      throw new HTTPError(400, "Duplicate ordinal in new step")
+  await sql.begin(async (tx) => {
+    const dbStep = {
+      recipe_id: recipeId,
+      ordinal: data.ordinal,
+      instruction: data.instruction,
     }
-    throw error
-  }
+    let stepId: string
+    try {
+      stepId = (
+        await tx<[{ id: string }]>`
+          INSERT INTO recipe_steps ${tx(dbStep)}
+          RETURNING id
+        `
+      )[0].id
+    } catch (error) {
+      if (error instanceof Error && error.message.includes("duplicate key")) {
+        throw new HTTPError(400, "Duplicate ordinal in new step")
+      }
+      throw error
+    }
 
-  if (data.ingredients.length) {
-    const dbStepIngredients = data.ingredients.map((i) => ({
-      recipe_step_id: stepId,
-      recipe_ingredient_id: i,
-    }))
-    await sql`INSERT INTO recipe_step_ingredients ${sql(dbStepIngredients)}`
-  }
+    if (data.ingredients.length) {
+      const dbStepIngredients = data.ingredients.map((i) => ({
+        recipe_step_id: stepId,
+        recipe_ingredient_id: i,
+      }))
+      await tx`INSERT INTO recipe_step_ingredients ${tx(dbStepIngredients)}`
+    }
+  })
 }
 
 export async function deleteRecipe(id: string) {
