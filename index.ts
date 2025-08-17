@@ -6,7 +6,9 @@ import {
   createIngredient,
   createRecipe,
   createRecipeStep,
+  createUser,
   deleteRecipe,
+  elevateUser,
   getAllIngredients,
   getAllRecipes,
   getRecipeById,
@@ -138,7 +140,7 @@ r.get("/api/v1/ingredients", async (req) => {
 r.post("/api/v1/ingredients", async (req) => {
   const auth = getAuth(req, true)
   if (!(auth.flags & 1)) {
-    return error("You are not allowed to create ingredients", 403)
+    return error("Non-admins are not allowed to create ingredients", 403)
   }
   const body = await req.json()
   const data = CreateIngredientBody.safeParse(body)
@@ -152,7 +154,7 @@ r.post("/api/v1/ingredients", async (req) => {
 r.put("/api/v1/ingredients/:id", async (req) => {
   const auth = getAuth(req, true)
   if (!(auth.flags & 1)) {
-    return error("You are not allowed to create ingredients", 403)
+    return error("Non-admins are not allowed to create ingredients", 403)
   }
   const id = req.params.id
   const body = await req.json()
@@ -179,6 +181,23 @@ r.post("/api/v1/auth/login", async (req) => {
   }
   const token = signJWT({ sub: user.id, flags: user.flags })
   return ok({ token })
+})
+
+r.post("/api/v1/auth/register", async (req) => {
+  const body = await req.json()
+  const data = LoginBody.safeParse(body)
+  if (!data.success) {
+    return error(z.treeifyError(data.error), 400)
+  }
+  const passwordHash = await password.hash(data.data.password)
+  await createUser(data.data.username, passwordHash)
+  return ok(null, 201)
+})
+
+r.post("/api/v1/auth/elevate", async (req) => {
+  const auth = getAuth(req, true)
+  await elevateUser(auth.sub)
+  return ok("You are an administrator now. This is only for testing!")
 })
 
 r.get("/api/v1/auth/inspect", async (req) => {

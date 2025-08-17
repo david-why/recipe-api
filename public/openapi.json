@@ -394,6 +394,41 @@
           }
         }
       }
+    },
+    "/auth/register": {
+      "post": {
+        "summary": "Register an account",
+        "requestBody": {
+          "description": "The user details",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginBody"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "User successfully created"
+          }
+        }
+      }
+    },
+    "/auth/elevate": {
+      "post": {
+        "summary": "Elevate the signed-in user to an admin (testing only)",
+        "security": [
+          {
+            "jwt": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Elevation successfully completed"
+          }
+        }
+      }
     }
   },
   "components": {

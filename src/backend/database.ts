@@ -375,3 +375,16 @@ export async function getUserById(id: string) {
   `
   return users[0] ? mapDbUser(users[0]) : null
 }
+
+export async function createUser(username: string, passwordHash: string) {
+  const dbUser = {
+    username,
+    password_hash: passwordHash,
+    flags: 0
+  }
+  await sql`INSERT INTO users ${sql(dbUser)} RETURNING id`
+}
+
+export async function elevateUser(userId: string) {
+  await sql`UPDATE users SET flags = flags | 1 WHERE id = ${userId}`
+}
