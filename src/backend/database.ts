@@ -380,9 +380,16 @@ export async function createUser(username: string, passwordHash: string) {
   const dbUser = {
     username,
     password_hash: passwordHash,
-    flags: 0
+    flags: 0,
   }
-  await sql`INSERT INTO users ${sql(dbUser)} RETURNING id`
+  try {
+    await sql`INSERT INTO users ${sql(dbUser)} RETURNING id`
+  } catch (error) {
+    if (error instanceof Error && error.message.includes("duplicate key")) {
+      throw new HTTPError(400, "Username already exists")
+    }
+    throw error
+  }
 }
 
 export async function elevateUser(userId: string) {
