@@ -32,6 +32,7 @@
       },
       "post": {
         "summary": "Create recipe",
+        "description": "The items under the `$.steps.ingredients` array are references to user-defined IDs in the `$.ingredients` array, and the `$.ingredients.ingredientId` refers to the global ingredient resource IDs (as seen in `GET /ingredients`)",
         "security": [
           {
             "jwt": []
@@ -219,7 +220,8 @@
         }
       },
       "post": {
-        "summary": "Create ingredient",
+        "summary": "Create ingredient (admin only)",
+        "description": "Use the `POST /auth/elevate` endpoint to make yourself an admin for testing",
         "security": [
           {
             "jwt": []
@@ -265,7 +267,8 @@
     },
     "/ingredients/{id}": {
       "put": {
-        "summary": "Update ingredient",
+        "summary": "Update ingredient (admin only)",
+        "description": "Use the `POST /auth/elevate` endpoint to make yourself an admin for testing",
         "security": [
           {
             "jwt": []
@@ -502,7 +505,10 @@
       },
       "IngredientUnit": {
         "type": "string",
-        "description": "The unit of the ingredient amount"
+        "description": "The unit of the ingredient amount",
+        "examples": [
+          "L"
+        ]
       },
       "Ingredient": {
         "type": "object",
@@ -561,6 +567,9 @@
         "description": "A user",
         "allOf": [
           {
+            "$ref": "#/components/schemas/BaseUser"
+          },
+          {
             "properties": {
               "passwordHash": {
                 "type": "string",
@@ -604,7 +613,10 @@
                           "description": "The list of identifiers of the ingredients used by this step",
                           "items": {
                             "type": "string",
-                            "description": "An identifier referencing an item in the ingredients array of Recipe objects"
+                            "description": "An identifier referencing an item in the $.ingredients array of this request",
+                            "examples": [
+                              "some_ingredient_id"
+                            ]
                           }
                         }
                       },
@@ -628,7 +640,10 @@
                       "properties": {
                         "id": {
                           "type": "string",
-                          "description": "The identifier of the recipe ingredient (unique in this request)"
+                          "description": "The identifier of the recipe ingredient (unique in this request, referred to by $.steps.ingredients; does not have to be an UUID)",
+                          "examples": [
+                            "some_ingredient_id"
+                          ]
                         },
                         "ingredientId": {
                           "type": "string",
@@ -728,7 +743,10 @@
         "properties": {
           "quantity": {
             "type": "number",
-            "description": "The amount of the ingredient used in the recipe"
+            "description": "The amount of the ingredient used in the recipe",
+            "examples": [
+              1
+            ]
           },
           "unit": {
             "$ref": "#/components/schemas/IngredientUnit"
@@ -764,7 +782,7 @@
             "description": "The user-readable name of the ingredient"
           },
           "defaultUnit": {
-            "type": "string",
+            "$ref": "#/components/schemas/IngredientUnit",
             "description": "The default unit for the ingredient"
           }
         },
